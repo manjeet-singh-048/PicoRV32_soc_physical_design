@@ -1,4 +1,5 @@
-# VSD-Physical design flow
+# VSD - Physical Design flow using Openlane
+## Introduction to Openlane flow and tools
 ![image](https://user-images.githubusercontent.com/125300415/224268894-44bac0f7-2962-4915-bb65-10a25d2ea8e6.png)
 
 ## Prep design
