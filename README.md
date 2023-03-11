@@ -15,17 +15,34 @@ Installation, documentation and architecture of OpenLane can be found in this [O
 ### Design Preparation
 The First step is to understand the directory structure inside <openlane_working_directory>/openlane/designs/
 This area has various type of designs already setup. We will do our analysis on a Picorv32a design which is a processor core with RISC V Instruction set architecture(ISA).
-In this Workshop, We will be using the Picorv32a design for hands-on experience of various steps of Physical Design.
+In this Workshop, We will be using the Picorv32a design for hands-on experience of the various steps of Physical Design.
 
-1) Invoking the OpenLane and Design preparation
-docker command invokes openlane
-``` ./flow.tcl -interactive``` #Interactive mode allows us to run the various stages sequentially and also allows to set variables as & when required        
-``` prep -design picorv32a ``` Loading the Picorv32a design into openlane
-2)
+1. Invoking the OpenLane and Design preparation
+  - Use docker command to invoke openlane
+  - ``` ./flow.tcl -interactive     ``` #Interactive mode allows us to run the various stages sequentially and also allows to set variables as & when required 
+  - ``` package require openlane 0.9``` #Loading openlane packages 
+     - [IMG]() 
+  - ``` prep -design <design_name>  ``` #Initiates Design preparation and also reads the config.tcl for tool configuration.
+     -We will be using Picorv32a design. All the related config files can be found in openlane/designs/<design_name>/
+     -Outputs of prep design stage
+     - [IMG]()
+  - All the subsequent steps done like synthesis, floorplanning, Powerplanning etc will be get stored in a dir under **/designs/picorv32a/runs/_tag_/results/**
 
-## Synthesis
 
-## Floorplanning
-After starting an interactive mode for openlane, we need to do 
-prep -design picorv32a -tag <synthesis run tag name>
-run_floorplanning
+2. Synthesis
+  - ```run_synthesis``` #Command used for running synthesis
+  - This step sythesizes a gate level netlist from the verilog input file, does the technology mapping and also does static timing analysis on the synthesized netlist using OpenSTA.
+    - Synthesized Gate netlist is dumped under **/picorv32a/runs/<tag/results/synthesis/picorv32a.synthesis.v**
+    - Reports directory has the reports of the synthesis step plus the timing reports
+  - results after run_synthesis
+     - [IMG]()
+
+3. Floorplanning
+  -For jumpstarting from a previous step. We follow the following steps
+     a. start an interactive mode for openlane.
+     b. ```prep -design picorv32a -tag <synthesis run tag name>```
+
+  -```run_floorplan``` #During floorplan we define rules for floorplanning through config.tcl. The precedence order for various level config files are PDK.tcl >>/designs/picorv32a/config.tcl>>/openlane/configurations/floorplan.tcl(sys_defaults).
+     -Floorplanning also adds endcap cells and does tap cell insertion.
+     -```run_floorplan``` calls the following atomic steps under the hood. ```init_floorplan, place_io, global_placement_or, detailed_placement, tap_decap_or```
+  
