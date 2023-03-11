@@ -19,8 +19,9 @@ In this Workshop, We will be using the Picorv32a design for hands-on experience 
 
 1) Invoking the OpenLane and Design preparation
 docker command invokes openlane
-''' ./flow.tcl -interactive
-''' prep -design picorv32a
+``` ./flow.tcl -interactive``` #Interactive mode allows us to run the various stages sequentially and also allows to set variables as & when required        
+``` prep -design picorv32a ``` Loading the Picorv32a design into openlane
+2)
 
 ## Synthesis
 
