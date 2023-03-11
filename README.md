@@ -13,6 +13,14 @@ OpenLANE includes several open-source tools and scripts that automate the digita
 ## ASIC Design using OpenLANE
 Installation, documentation and architecture of OpenLane can be found in this [OpenLane Github](https://github.com/The-OpenROAD-Project/OpenLane) link
 ### Design Preparation
+The First step is to understand the directory structure inside <openlane_working_directory>/openlane/designs/
+This area has various type of designs already setup. We will do our analysis on a Picorv32a design which is a processor core with RISC V Instruction set architecture(ISA).
+In this Workshop, We will be using the Picorv32a design for hands-on experience of various steps of Physical Design.
+
+1) Invoking the OpenLane and Design preparation
+docker command invokes openlane
+''' ./flow.tcl -interactive
+''' prep -design picorv32a
 
 ## Synthesis
 
