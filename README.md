@@ -10,7 +10,10 @@ OpenLANE includes several open-source tools and scripts that automate the digita
 ![image](https://user-images.githubusercontent.com/125300415/224268894-44bac0f7-2962-4915-bb65-10a25d2ea8e6.png)
 
 
-## Prep design
+## ASIC Design using OpenLANE
+Installation, documentation and architecture of OpenLane can be found in this [OpenLane Github](https://github.com/The-OpenROAD-Project/OpenLane) link
+### Design Preparation
+
 ## Synthesis
 
 ## Floorplanning
