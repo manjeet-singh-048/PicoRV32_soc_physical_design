@@ -56,18 +56,10 @@ In this Workshop, We will be using the Picorv32a design for hands-on experience 
      ![image](https://user-images.githubusercontent.com/125300415/224516131-dfda7a48-023c-437b-b4c6-29747a1752f7.png)
 
 
-
   - Invoke Magic to see the DEF dumped in the floorplan stage
      - ```magic -T <Tech file of PDK> lef read <path to merged lef> def read <path to DEF file>```
      - tech_file - sky130.tech, def - from floorplan outputs
      ![image](https://user-images.githubusercontent.com/125300415/224516013-74afca8d-b4b8-43de-988c-14ee75ddfa31.png)
-
-
-  - Calculations
-     - Core_utilization = Area occupied by cells/ Core area
-     - Area occupied by cells :
-     - Core area from report  :
-     - Core_utilization =
 
 ### 4. Placement
 
@@ -76,7 +68,8 @@ In this Workshop, We will be using the Picorv32a design for hands-on experience 
      - **Detailed Placement** - performs placement of standard cells in rows, taking care of abuttment etc
   - Outputs
      - runs/<tag>/results/placement/picorv32a.placement.def
-     - [IMG]
+     ![image](https://user-images.githubusercontent.com/125300415/224518338-b33082a0-6eff-4b66-bd04-78619ed1a6f2.png)
+
 
   - Checking DEF after placement in Magic
      - ```magic -T <Tech file of PDK> lef read <path to merged lef> def read <path to DEF file post placement>```
@@ -136,6 +129,8 @@ Creation of single height standard cell and plug this custom cell into a more co
 
   - Extracted Spice netlist from Layout
     ![image](https://user-images.githubusercontent.com/125300415/224516734-05398e07-0728-4138-88fa-ce5e6f24a134.png)
+    ![image](https://user-images.githubusercontent.com/125300415/224517727-c5e06213-0ada-4b4f-ab7d-44b82e3ba086.png)
+
 
 
 #### SPICE DECK creation & spice simulations.
@@ -144,10 +139,54 @@ We will create a SPICE deck for the inverter model. SPICE DECK will have
    ![Sky130_inv.spice](https://user-images.githubusercontent.com/125300415/224516776-95c499b2-189e-4626-9817-052754697b7b.png)
    - Spice Simulation ```ngspice sky130_inv.spice```
    - for plotting the waveform use ``` plot y vs time a ``` (y -> output, a-> Input)
- ![waveform](https://user-images.githubusercontent.com/125300415/224517353-3021bd0e-99d5-410c-81a1-f99c33ad1ee2.png)
+    ![waveform](https://user-images.githubusercontent.com/125300415/224517481-2535e04b-229e-47c0-888f-05541ac75079.png)
 
-### Layout Timing Analysis & CTS
 
+### Plugging the VSD Inverter cell into openlane flow
+  1. Copy the LEF & .lib files of the custom inverter into ```designs/picorv32a/src``` directory
+  2. Edit the ```designs/picorv32a/config.tcl``` and set the env variables like LIB_SYNTH_TYPICAL, LIB_FASTEST, LIB_SLOWEST etc & run synthesis again.
+  
+#### Synthesis
+Before delay-area optimization following is the delay stats for the design.
+![image](https://user-images.githubusercontent.com/125300415/224517828-5a6ca6c4-3329-40e2-ab39-0479e12dc0ae.png)
+
+Optimize between delay & area using the following env variables( details in ```openlane/configuration/README.md```)
+```% set ::env(SYNTH_STRATEGY) "DELAY 1"```
+```% set ::env(SYNTH_BUFFERING) 1```
+```% set ::env(SYNTH_SIZING) 1```
+
+
+#### Floorplanning
+```run_floorplan``` fails after plugging in inverter LEF
+![image](https://user-images.githubusercontent.com/125300415/224517978-e80f4923-e515-4386-9947-1c75bccf627a.png)
+
+We will use atomic steps to achieve the same
+
+```
+Floor plan stage:
+   init_floorplan
+   place_io
+   global_placement_or
+   tap_decap_or
    
+Placement:
+   detailed_placement
+
+PD network generation :
+   gen_pdn
+Routing :
+   run_routing 
+```
+  - Checking the Inv cell in Magic  
+  ![image](https://user-images.githubusercontent.com/125300415/224518067-010c7be7-9389-486f-a410-28da05aa16b7.png)
+
+### Optimizing synthesis to reduce setup Violations
+  1. sta.conf file
+  ![image](https://user-images.githubusercontent.com/125300415/224518290-82c01f9f-650d-416f-8027-f51af1e619e2.png)
+
+  2. my_base.sdc file
+
+
+
    
 
