@@ -9,8 +9,40 @@ OpenLANE includes several open-source tools and scripts that automate the digita
 ### **Openlane detailed ASIC flow**
 ![detailed ASIC flow](https://user-images.githubusercontent.com/125300415/224268894-44bac0f7-2962-4915-bb65-10a25d2ea8e6.png)
 
+### Open-source eda tools in OpenLane
+OpenLane flow integrated several key open source tools over the execution stages
+```
+    Synthesis
+        yosys - Performs RTL synthesis
+        abc - Performs technology mapping
+        OpenSTA - Performs static timing analysis on the resulting netlist to generate timing reports
+    Floorplan and PDN
+        init_fp - Defines the core area for the macro as well as the rows (used for placement) and the tracks (used for routing)
+        ioplacer - Places the macro input and output ports
+        pdn - Generates the power distribution network
+        tapcell - Inserts welltap and decap cells in the floorplan
+    Placement
+        RePLace - Performs global placement
+        Resizer - Performs optional optimizations on the design
+        OpenDP - Perfroms detailed placement to legalize the globally placed components
+    CTS
+        TritonCTS - Synthesizes the clock distribution network (the clock tree)
+    Routing
+        FastRoute - Performs global routing to generate a guide file for the detailed router
+        CU-GR - Another option for performing global routing.
+        TritonRoute - Performs detailed routing
+        SPEF-Extractor - Performs SPEF extraction
+    GDSII Generation
+        Magic - Streams out the final GDSII layout file from the routed def
+        Klayout - Streams out the final GDSII layout file from the routed def as a back-up
+    Checks
+        Magic - Performs DRC Checks & Antenna Checks
+        Klayout - Performs DRC Checks
+        Netgen - Performs LVS Checks
+        CVC - Performs Circuit Validity Checks
+```
 
-## ASIC Design using OpenLANE
+## ASIC Design using OpenLane
 Installation, documentation and architecture of OpenLane can be found in this [OpenLane Github](https://github.com/The-OpenROAD-Project/OpenLane) link
 ### Design Preparation
 Let's understand the directory structure inside **<openlane_work_dir>/openlane/designs/** <br>
@@ -37,6 +69,13 @@ In this Workshop, We will be using the Picorv32a design for hands-on experience 
     - Synthesized Gate netlist is dumped as below file **/picorv32a/runs/\<tag\>/results/synthesis/picorv32a.synthesis.v**
     - Reports directory has the reports of the synthesis step plus the timing reports
     ![synthesis reports](https://user-images.githubusercontent.com/125300415/225746952-f47f45cb-7c69-485a-8624-980ad28ad42e.png)
+    - Flop Ratio can be found from synthesis report [1-yosys_4.stats.rpt]
+       ![yosys 4 rpt](https://user-images.githubusercontent.com/125300415/225918255-b9452a56-4f80-42a1-877d-cbdb3d1b54c0.png)
+
+       ![image](https://user-images.githubusercontent.com/125300415/225917677-7d09443e-a7d5-468e-9da4-748c65b71ded.png)
+       - No. of DFF : 1613
+       - No. of Cells : 14876
+       - Flop Ratio : 1613/14876 = 10.8%
 
 
 ### 3. Floorplanning
@@ -63,13 +102,20 @@ In this Workshop, We will be using the Picorv32a design for hands-on experience 
         - tech_file = sky130.tech, def = from floorplan outputs
      ![Magic def](https://user-images.githubusercontent.com/125300415/224516013-74afca8d-b4b8-43de-988c-14ee75ddfa31.png)
 
+Core Utilization
+  - Area occupied by cells from synthesis report [1-yosys_4.stats.rpt] : 147,712.9184 um2
+  - Core area form floor plan stage report : 420,473.2672 um2
+  - Core utilization = 35.13% [as specified in PDK specific config.tcl]
+  ![pdk core utilization](https://user-images.githubusercontent.com/125300415/225919204-0cf43bf2-2cf6-4d6e-aa14-b59f231693c1.png)
+
+
 ### 4. Placement
 
   - ```run_placement``` #Congestion aware placement happens in two steps internally
      - **Global Placement** - uses HPWL(half parameter wire length) method to ensure reduced wire length.
      - **Detailed Placement** - performs placement of standard cells in rows, taking care of abuttment etc
   - Outputs
-     - ```runs/\<tag\>/results/placement/picorv32a.placement.def```
+     - ```runs/<tag>/results/placement/picorv32a.placement.def```
      ![results - placement](https://user-images.githubusercontent.com/125300415/225749364-68ae463c-330d-4953-a0f6-a16354412fda.jpg)
 
 
@@ -88,7 +134,7 @@ In this Workshop, We will be using the Picorv32a design for hands-on experience 
 
 
 ### 6. Routing
-  - ```run_routing``` #Performs 
+  - ```run_routing``` 
   - global/fast routing : creates routing guides (using FastRoute)
   - detailed routing : Algorithm to pick best route from routing guides and routes metal geometries in preferred direction. (Using Triton Route)
   - runs/\<tag\>/results/routing/
@@ -115,7 +161,7 @@ The GUNA software is used for characterizing a standard cell. Cells of different
   7. Pass necesary simulation commands
 
 ### Designing a Custom CMOS Inverter cell
-Creation of single height standard cell and plug this custom cell into a more complex design and perform it's PnR in the openlane flow. The standard cell chosen is a basic CMOS inverter and it will be plugged into the picorv32a core. More details in this [Github link](https://github.com/nickson-jose/vsdstdcelldesign)
+Creation of single height standard cell and plug this custom cell into a more complex design and perform it's PnR in the openlane flow. The standard cell chosen is a basic CMOS inverter and it will be plugged into the picorv32a core. More details in Nickson's [Github link](https://github.com/nickson-jose/vsdstdcelldesign)
 
 #### Steps to extract spice netlist from layout (in Magic)
   - ```extract all```
@@ -137,19 +183,25 @@ Creation of single height standard cell and plug this custom cell into a more co
 
 
 #### SPICE DECK creation & SPICE simulations.
-We will create a SPICE deck for the inverter model. SPICE deck will have
+We will create a SPICE deck for the inverter model. SPICE deck will have following things : 
    - ```Model description, Netlist description, Component definitions and Values, Simulation commands & model include statements```
    ![Sky130_inv.spice](https://user-images.githubusercontent.com/125300415/224516776-95c499b2-189e-4626-9817-052754697b7b.png)
    - ```ngspice sky130_inv.spice``` Open Inverter spice file with ngspice
    - for plotting the waveform use ``` plot y vs time a ``` (y -> output, a-> Input)
     ![waveform](https://user-images.githubusercontent.com/125300415/224517481-2535e04b-229e-47c0-888f-05541ac75079.png)
 
+#### LEF generation of a Standard Cell
+Look for the tracks.info file in the pdks directory, tracks defined here will be used for routing.
+Next, we enable grid in magic using command ```grid [xspacing [yspacing [xorigin yorigin]]]``` in current scenario ```grid 0.46um 0.34um 0.23um 0.17um```
+![grid track info](https://user-images.githubusercontent.com/125300415/225921569-4a9783e2-8df9-4f6c-bd4f-ee7ae299f599.png)
+Width of standard cell should be an odd multiple of x-pitch and height should be an odd multiple of y-pitch. Signal ports should be at the intersection of horizonatal and vertical tracks. We can see that Width of our cell is 3 times x-pitch in above image. More details of LEF creation can be reffered in ![Nickson's Github link](https://github.com/nickson-jose/vsdstdcelldesign).
 
-### Plugging the VSD Inverter cell into the openlane flow
+
+## Plugging the VSD Inverter cell into the openlane flow
   1. Copy the LEF & .lib files of the custom inverter into ```designs/picorv32a/src``` directory
-  2. Edit the ```designs/picorv32a/config.tcl``` and set the env variables like LIB_SYNTH_TYPICAL, LIB_FASTEST, LIB_SLOWEST etc & run synthesis again.
+  2. Edit the ```designs/picorv32a/config.tcl``` and set the env variables like ```LIB_SYNTH_TYPICAL```, ```LIB_FASTEST```, ```LIB_SLOWEST``` etc & run synthesis again.
   
-#### Synthesis
+### Synthesis
 Before delay-area optimization following is the delay stats for the design.
 ![image](https://user-images.githubusercontent.com/125300415/224517828-5a6ca6c4-3329-40e2-ab39-0479e12dc0ae.png)
 
@@ -160,7 +212,7 @@ Optimize between delay & area using the following env variables( more details in
 ```% set ::env(SYNTH_SIZING) 1``` <br>
 
 
-#### Floorplanning
+### Floorplanning
 ```run_floorplan``` fails after plugging in inverter LEF
 ![image](https://user-images.githubusercontent.com/125300415/224517978-e80f4923-e515-4386-9947-1c75bccf627a.png)
 
@@ -194,7 +246,7 @@ Routing :
 
 ![report tns wns](https://user-images.githubusercontent.com/125300415/225759071-b45ee6db-ff6a-49fe-8f1f-d444ba905508.jpg)
 
-Picking up cells with more fanout and less strength and then replacing them using ```replace_cell <instance_name> <lib_cellname>```. ** Target is to get Wns < 1ns**. Starting from the starting few cells in clk path, and replacing with higher drive strength cells.
+Picking up cells with more fanout and less strength and then replacing them using ```replace_cell <instance_name> <lib_cellname>```. **Target is to get wns \< 1ns**. Starting from the starting few cells in clk path, and replacing with higher drive strength cells.
 ```report_net -connections <net_id>``` : to check the fanout details <br>
 ![report_cehcks   replace cell](https://user-images.githubusercontent.com/125300415/225759623-e2e781c1-6e85-44b4-b802-1e7ae07636ea.jpg)
 
@@ -204,7 +256,7 @@ We will dump out the modified netlist now using below command.
 
 Place and Route is an iterative process, we fix some things, optimize and do the stages again. Now, we have a netlist with wns below 1ns. we will go ahead with floorplanning.
 
-  - ```run_floorplan``` # Since we written verilog into previous synthesis results. Improved netlist will be taken <br>
+  - ```run_floorplan``` : Since we written verilog into previous synthesis results. Improved netlist will be taken <br>
   - we will use atomic steps for floorplan as described above in floorplan_stage followed by ```detailed_placement```
   ![lef reading after placement](https://user-images.githubusercontent.com/125300415/225770095-49dc0b06-d4ab-40b7-8ab4-b57a7f059561.jpg)
 
@@ -218,6 +270,8 @@ Place and Route is an iterative process, we fix some things, optimize and do the
   - ```run_cts``` : after CTS stage, a new verilog file with cts data in results/synthesis folder is generated and cts.def is generated in results/cts folder 
     - We can check input values in ```openlane/scripts/openroad/or_cts.tcl```. Check max_cap, max_slew, Clock_buffer list etc <br>
   ![CTS succesful](https://user-images.githubusercontent.com/125300415/225765374-fe8044d9-2572-496b-b6ea-cda0ea8274ce.jpg)
+
+
   
   - **OpenRoad** : We can also do Timing Analysis by invoking openroad while running openlane. This way we can simply use to env variables.
     - Run these steps to setup a db first <br>
@@ -234,13 +288,15 @@ set_propagated_clock [all_clocks]
 report_checks -path_delay min_max -format full_clock_expanded -digits 4
 ```
 
-  - verify the min_path & max_path timing condition is met after setting the correct library here using $::env(LIB_SYNTH_COMPLETE) since we used typical library for synthesis.
+  - verify the **min_path** & **max_path** timing condition is met after setting the correct library here using $::env(LIB_SYNTH_COMPLETE) since we used typical library for synthesis.
   ![image](https://user-images.githubusercontent.com/125300415/225774279-35c809f8-a5c0-4090-bed8-0d08d3c0e205.png)
 
-  - Small exercise: To remove smallest strenth clk buffer from cts_clk_buffer_list
+**Small exercise:** To remove smallest strenth clk buffer from cts_clk_buffer_list
+  - ``` echo $::env(CTS_CLK_BUFFER_LIST)``` and set using ```lreplace``` as shown.
+
     ![cts clk buf edit](https://user-images.githubusercontent.com/125300415/225773242-133a777c-5238-4a23-bdd4-461bd8ef32eb.png)
     ![run_cts](https://user-images.githubusercontent.com/125300415/225773484-0f52bcff-1884-4b43-b501-95184fde9984.png)
-  - set the correct CURRENT_DEF before run_cts to avoid error
+  - set the correct ```CURRENT_DEF``` before ```run_cts``` to avoid error
   - Check the clock skew as shown below
   ![image](https://user-images.githubusercontent.com/125300415/225773642-089ff06d-f19c-4946-a6e7-c13cba36bfc0.png)
 
@@ -249,11 +305,21 @@ report_checks -path_delay min_max -format full_clock_expanded -digits 4
   ![PDN generation](https://user-images.githubusercontent.com/125300415/225774507-5fbbc565-34b4-4d6f-b617-50ab39872dc5.jpg)
 
 
-  - ```run_routing``` (a) global route creates routing guides, (b) detail route algorithm picks best possible route and places geometries.
+  - ```run_routing``` (a) global route(FastRoute) creates routing guides, (b) detail route (TritonRoute) algorithm picks best possible route and places geometries.
   
   ![Routing](https://user-images.githubusercontent.com/125300415/225765268-8f798182-2b78-471f-8dd4-1fa73a18211f.png)
+    - Outputs: ```<tags>/results/routing/```
+     ![image](https://user-images.githubusercontent.com/125300415/225931181-cc51f21b-8838-46e1-a6fd-06bad06f2de8.png)
+    - ```ls <tags>/tmp/routing/```
+    ![tmp/routing/](https://user-images.githubusercontent.com/125300415/225929110-5dfccadb-8949-44e0-abc8-0fd861b8eb15.png)
 
-### 16 Mask CMOS process steps
+  - SPEF Generated is shown below.
+   ![image](https://user-images.githubusercontent.com/125300415/225932414-9cb7730f-d816-4a99-81e9-34d119a74168.png)
+ 
+
+## PART 3. 16 Mask CMOS process steps
+
+The 16-mask CMOS process is a common manufacturing technique used in the production of modern integrated circuits (ICs) and microprocessors. This process involves a series of 16 distinct steps, each of which contributes to the creation of a functional and reliable CMOS device. These steps include wafer preparation, deposition of various layers of material, photolithography to pattern these layers, etching to remove unwanted material, and finally, implantation of dopants to create the desired electrical properties. The end result is a complex circuit that can perform a wide range of tasks with high efficiency and precision. Understanding these steps is essential for designing and optimizing CMOS devices for a variety of applications, from consumer electronics to high-performance computing. Following are the Key Steps of this process: 
   1. Selecting a substrate - generally P-type.
   2. Creating active region for transistors.
   3. N-well & P-well formation.
@@ -267,10 +333,10 @@ report_checks -path_delay min_max -format full_clock_expanded -digits 4
   
 
 ## ACKNOWLEDGEMENT
-1. ![Kunal Ghosh](https://github.com/kunalg123/) - Co-founder of VLSI System Design (VSD)
-2. ![Nickson Jose](https://github.com/nickson-jose) - Physical Design & Lab expert VLSI System Design (VSD) <br>
+  - ![Kunal Ghosh](https://github.com/kunalg123/) - Co-founder of VLSI System Design (VSD)
+  - ![Nickson Jose](https://github.com/nickson-jose) - Physical Design & Lab expert, VLSI System Design (VSD) <br>
 
-Thank you for the enriching learning experience through this workshop. It was a good combination of theory plus Labs and I am looking forward to apply the knowledge gained here for more projects.
+Thank you for the enriching learning experience through this workshop. It was a good combination of theory plus Labs and I am looking forward to apply the knowledge gained here in interesting projects.
 
 
    
