@@ -299,11 +299,28 @@ report_checks -path_delay min_max -format full_clock_expanded -digits 4
   - set the correct ```CURRENT_DEF``` before ```run_cts``` to avoid error
   - Check the clock skew as shown below
   ![image](https://user-images.githubusercontent.com/125300415/225773642-089ff06d-f19c-4946-a6e7-c13cba36bfc0.png)
+  
+## Day 5- Final Steps for RTL2GDS using tritonRoute and OpenSTA
 
-  - ```gen_pdn``` : generates PG network. done after CTS. In tmp/floorplan folder pdn.def is generated containing PG rounting + CTS def.
+### Generating Power Distribution Network(PDN)
+  ![PDN](https://user-images.githubusercontent.com/125300415/236278070-e7cb444b-0100-46df-991f-6397315bfbdc.png) <br>
+
+Power Distribution Network is created in order to provide access to the Power and GND domain for all the cells in the chip. This is achieved by creating supply rings, straps & rails. The various VDD/VSS domains are taken from Power PADS to Rings and it is tapped from these rings using metal straps & finally reaches the cells through power rails. To generate pdn we follow the below steps:
+
+  - ```gen_pdn``` : generates PG network as per the pitch & width values for track.info file. In tmp/floorplan folder pdn.def is generated containing PG rounting + CTS def.
   ![gen_pdn](https://user-images.githubusercontent.com/125300415/225764671-ca63cae5-06cb-4c76-a037-2941cb8f6d74.png)
   ![PDN generation](https://user-images.githubusercontent.com/125300415/225774507-5fbbc565-34b4-4d6f-b617-50ab39872dc5.jpg)
 
+### Routing 
+Routing is a two steps process where firstly it creates a global or fast route & then it does detailed route. Below Image is self explanatory of these two steps.
+  ![Routing](https://user-images.githubusercontent.com/125300415/236282128-7e426be8-5b0b-44a0-b001-c159fc8e53ba.png) <br>
+  
+  1. Fast Route - It is coarse global route in which the whole die is divided into smaller blocks and very basic routing is performed. Output of Fast Route is routing guide and is basically fed to Detail route. It only creates grid cells and tiles in which the TritonRoute will use its algorithm for having the best routing with least twists and turns.
+         ![Routing guide](https://user-images.githubusercontent.com/125300415/236283417-831f6d9b-a32d-4836-85e4-dbabd35dbe7f.png)
+  
+  2. Detail Route- TritonRoute does the detailed routing based on the pre processed routing guides from FastRoute and satisfies the inter-guide connectivity. 
+
+The Routing is done using  MILP (mixed integer linear programming) based panel routing scheme with Intra-Layer parallel and inter-layer sequential routing framework. This means that first M1 routing will happen and after that it will go to M2. But in same layer, routing always happens parallel. Steps for running the Routing is as below:
 
   - ```run_routing``` (a) global route(FastRoute) creates routing guides, (b) detail route (TritonRoute) algorithm picks best possible route and places geometries.
   
@@ -313,6 +330,11 @@ report_checks -path_delay min_max -format full_clock_expanded -digits 4
     - ```ls <tags>/tmp/routing/```
     ![tmp/routing/](https://user-images.githubusercontent.com/125300415/225929110-5dfccadb-8949-44e0-abc8-0fd861b8eb15.png)
 
+Now, hook up the **final DEF** file '''/openLANE_flow/designs/picorv32a/runs/<tag date>/results/routing/picorv32a.def''' with the tech file and the LEF to get the final layout using **magic**
+     ![image](https://user-images.githubusercontent.com/125300415/236287111-4f7d8587-91aa-4542-8ee2-4e8eac9a09c9.png)
+
+### SPEF Extraction
+SPEF stands for **Standard Parasitic Exchange Format** which is used to represent the parasitic like Resistance & Capacitance of the route geometries. OpenLANE has the tool known as SPEF_EXTRACTOR, which is basically a parser which takes the LEF & DEF files as inputs and generates the SPEF file as output. This step is executed while executing '''run_routing'''
   - SPEF Generated is shown below.
    ![image](https://user-images.githubusercontent.com/125300415/225932414-9cb7730f-d816-4a99-81e9-34d119a74168.png)
  
