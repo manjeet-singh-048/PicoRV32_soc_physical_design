@@ -197,7 +197,7 @@ Next, we enable grid in magic using command ```grid [xspacing [yspacing [xorigin
 Width of standard cell should be an odd multiple of x-pitch and height should be an odd multiple of y-pitch. Signal ports should be at the intersection of horizonatal and vertical tracks. We can see that Width of our cell is 3 times x-pitch in above image. More details of LEF creation can be reffered in ![Nickson's Github link](https://github.com/nickson-jose/vsdstdcelldesign).
 
 
-## Plugging the VSD Inverter cell into the openlane flow
+## Part 3-Plugging the VSD Inverter cell into the openlane flow
   1. Copy the LEF & .lib files of the custom inverter into ```designs/picorv32a/src``` directory
   2. Edit the ```designs/picorv32a/config.tcl``` and set the env variables like ```LIB_SYNTH_TYPICAL```, ```LIB_FASTEST```, ```LIB_SLOWEST``` etc & run synthesis again.
   
@@ -310,7 +310,16 @@ Power Distribution Network is created in order to provide access to the Power an
   - ```gen_pdn``` : generates PG network as per the pitch & width values for track.info file. In tmp/floorplan folder pdn.def is generated containing PG rounting + CTS def.
   ![gen_pdn](https://user-images.githubusercontent.com/125300415/225764671-ca63cae5-06cb-4c76-a037-2941cb8f6d74.png)
   ![PDN generation](https://user-images.githubusercontent.com/125300415/225774507-5fbbc565-34b4-4d6f-b617-50ab39872dc5.jpg)
-
+  
+### Design Rule Checks(DRC)
+Before Routing lets look at the design rule checks. During routing we need to take care of the Design rule checks as well. Some common DRC rules are as follows:
+  ![DRC rules](https://user-images.githubusercontent.com/125300415/236391691-4092843e-bdce-4043-a161-f65b35e8332b.png)
+  - Minimum Wire Width
+  - Optimal Wire Pitch 
+  - Minimum Wire Spacing
+  - Via Width
+  - Via Spacing
+ 
 ### Routing 
 Routing is a two steps process where firstly it creates a global or fast route & then it does detailed route. Below Image is self explanatory of these two steps.
   ![Routing](https://user-images.githubusercontent.com/125300415/236282128-7e426be8-5b0b-44a0-b001-c159fc8e53ba.png) <br>
