@@ -1,4 +1,4 @@
-# VSD - Physical Design Workshop using Openlane
+# Picorv32-SOC Design using Open source tools
 
 ## Introduction to Openlane
 **OpenLANE** is an open-source digital integrated circuit (IC) design flow that enables the design of custom digital circuits using open-source tools and technologies. It is a complete RTL-to-GDSII (register-transfer level to graphic design system II) design flow that can be used for designing digital circuits ranging from simple to complex. 
